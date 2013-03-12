@@ -1,8 +1,26 @@
 #!/usr/bin/env bash
 
+function msg()
+{
+	echo "$0: $1 (press any key to continue)"
+	return $(read line)
+}
+
 if [[ ! -f NamesList.txt ]]; then
 	# grab the latest list of Unicode names
 	wget http://unicode.org/Public/UNIDATA/NamesList.txt
+else
+	msg "detected existing NamesList.txt: press any key to download latest and check for differences"
+	wget http://unicode.org/Public/UNIDATA/NamesList.txt -O NamesList.txt.new
+	if [[ `diff -s NamesList.txt NamesList.txt.new` ]]; then
+		date=`date +%Y-%m-%d`
+		msg "files match: deleting downloaded file and exiting"
+		rm NamesList.txt.new
+	else
+		msg "files differ! moving current NamesList.txt to NamesList.txt.old and generating new unicode.c"
+		mv NamesList.txt NamesList.txt.old
+		mv NamesList.txt.new NamesList.txt
+	fi
 fi
 
 # get the lines with codepoints and names
