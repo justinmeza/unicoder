@@ -64,5 +64,5 @@ $(cat names.c)
 
 $(cat codepoints.c)
 
-#define NUM_UNICODE $(cat names.txt | wc -l)
+#define NUM_UNICODE $(cat names.txt | wc -l | tr -d ' ')
 EOS
