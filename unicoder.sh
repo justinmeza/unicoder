@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+if type curl 2> /dev/null; then
+	GET="curl -O"
+	GET_RENAME="curl -o"
+else
+	GET="wget"
+	GET_RENAME="wget -O"
+fi
+
 function msg()
 {
 	echo "$0: $1 (press any key to continue)"
@@ -8,10 +16,10 @@ function msg()
 
 if [[ ! -f NamesList.txt ]]; then
 	# grab the latest list of Unicode names
-	wget http://unicode.org/Public/UNIDATA/NamesList.txt
+	${GET} http://unicode.org/Public/UNIDATA/NamesList.txt
 else
 	msg "detected existing NamesList.txt: press any key to download latest and check for differences"
-	wget http://unicode.org/Public/UNIDATA/NamesList.txt -O NamesList.txt.new
+	${GET_RENAME} NamesList.txt.new http://unicode.org/Public/UNIDATA/NamesList.txt
 	if [[ `diff -s NamesList.txt NamesList.txt.new` ]]; then
 		date=`date +%Y-%m-%d`
 		msg "files match: deleting downloaded file and exiting"
@@ -43,12 +51,12 @@ $(cat names.txt | sed -e 's/^\(.*\)$/	"\1",/')
 EOS
 
 # remove the comma from the last array entry
-cat codepoints.c.almost | tail -n -2 | sed -e 's/,$//' > codepoints.c.fixup
-cat names.c.almost | tail -n -2 | sed -e 's/,$//' > names.c.fixup
+cat codepoints.c.almost | tail -n 2 | sed -e 's/,$//' > codepoints.c.fixup
+cat names.c.almost | tail -n 2 | sed -e 's/,$//' > names.c.fixup
 
 # swap in the fixup lines
-cat codepoints.c.almost | head -n -2 | cat - codepoints.c.fixup > codepoints.c
-cat names.c.almost | head -n -2 | cat - names.c.fixup > names.c
+cat codepoints.c.almost | head -n $(( $(wc -l codepoints.c.almost | awk '{print $1}') - 2 )) | cat - codepoints.c.fixup > codepoints.c
+cat names.c.almost | head -n $(( $(wc -l names.c.almost | awk '{print $1}') - 2 )) | cat - names.c.fixup > names.c
 
 # tie everything together
 cat << EOS > unicode.c
